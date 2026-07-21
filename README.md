@@ -1,6 +1,6 @@
 # Achilles Troy T. Pagaoa
-
-## INF 231 – CTADMOBPL: Advanced Mobile Programming
+## INF 231 
+## CTADMOBPL: Advanced Mobile Programming
 
 This repository contains a Flutter project developed for the **Advanced Mobile Programming** course.
 
