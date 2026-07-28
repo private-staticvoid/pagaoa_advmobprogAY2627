@@ -1,121 +1,229 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'settings.dart';
 
+// Starts the app and provides the theme state globally using Provider.
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeModel(),
+      child: const MyApp(),
+    ),
+  );
 }
 
+// Manages the app theme state shared across the application.
+class ThemeModel with ChangeNotifier {
+  bool _isDark = false;
+
+  // Returns the current theme mode.
+  bool get isDark => _isDark;
+
+  // Switches between light and dark mode and updates the UI.
+  void toggleTheme() {
+    _isDark = !_isDark;
+    notifyListeners();
+  }
+}
+
+// Root widget that builds the application.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    final themeModel = Provider.of<ThemeModel>(context);
+
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'Ephemeral vs. App State',
+
+      // Applies the theme managed by Provider.
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorSchemeSeed: Colors.indigo,
+        useMaterial3: true,
+        brightness:
+            themeModel.isDark ? Brightness.dark : Brightness.light,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+
+      home: const MyHomePage(),
     );
   }
 }
 
+// Creates the home page where local state is used.
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+// Stores ephemeral state that only exists inside this page.
 class _MyHomePageState extends State<MyHomePage> {
+
+  // Temporary counter data that resets only when theme changes.
   int _counter = 0;
 
+  // Updates the counter value.
   void _incrementCounter() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
       _counter++;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
+
+      // App bar containing title and settings button.
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('App State'),
+        centerTitle: true,
+        elevation: 0,
+
+        actions: [
+
+          // Opens settings page.
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+
+            onPressed: () async {
+
+              // Receives true only when theme changes.
+              final bool? themeChanged = await Navigator.push<bool>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsPage(),
+                ),
+              );
+
+              // Resets counter only when theme changes.
+              if (themeChanged == true) {
+                setState(() {
+                  _counter = 0;
+                });
+              }
+            },
+          ),
+        ],
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+
+      // Displays the main UI content.
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+
+          // Shows explanation of ephemeral state.
+          Container(
+            padding: const EdgeInsets.symmetric(
+              vertical: 30,
+              horizontal: 20,
             ),
-          ],
-        ),
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme
+                  .primaryContainer,
+              borderRadius: BorderRadius.circular(20),
+            ),
+
+            child: const Column(
+              children: [
+
+                CircleAvatar(
+                  radius: 35,
+                  child: Icon(
+                    Icons.memory,
+                    size: 35,
+                  ),
+                ),
+
+                SizedBox(height: 12),
+
+                Text(
+                  'Ephemeral State',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                SizedBox(height: 8),
+
+                Text(
+                  'Ephemeral state is temporary data for the increment.\n'
+                  'Whenever the theme changes, the counter resets to zero.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Displays counter value.
+          Card(
+            elevation: 3,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: 28,
+                horizontal: 20,
+              ),
+
+              child: Column(
+                children: [
+
+                  const Icon(
+                    Icons.add_circle_outline,
+                    size: 45,
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  const Text(
+                    'Counter',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Shows current counter value.
+                  Text(
+                    '$_counter',
+                    style: Theme.of(context)
+                        .textTheme
+                        .displayMedium
+                        ?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  const Text(
+                    'Tap the + button to increase the counter.',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
+
+      // Button that increments the counter.
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('Increment'),
       ),
     );
   }
