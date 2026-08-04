@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/theme_provider.dart';
 
+import 'main.dart';
 
 // Theme settings page.
 class SettingsPage extends StatefulWidget {
@@ -20,7 +20,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
 
-    final themeModel = Provider.of<ThemeProvider>(context);
+    final themeModel = Provider.of<ThemeModel>(context);
 
     return Scaffold(
 
