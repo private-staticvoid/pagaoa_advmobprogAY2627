@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import '../providers/theme_provider.dart';
 
+import '../providers/theme_provider.dart';
+import '../widgets/custom_text.dart';
 
 // Theme settings page.
 class SettingsPage extends StatefulWidget {
@@ -11,118 +13,86 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-// Stores settings page state.
 class _SettingsPageState extends State<SettingsPage> {
-
-  // Tracks if the theme was changed.
   bool themeChanged = false;
 
   @override
   Widget build(BuildContext context) {
-
     final themeModel = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
-
       appBar: AppBar(
-        title: const Text('Settings'),
+        // ENHANCEMENT 3 (Settings alignment): CustomText + .sp instead of
+        // plain Text, so this matches the typography used on Home/Product/
+        // Detail screens rather than looking like a separate app.
+        title: CustomText(
+          text: 'Settings',
+          fontSize: 20.sp,
+          fontWeight: FontWeight.w600,
+        ),
         centerTitle: true,
         elevation: 0,
-
-        // Returns false if no theme change happened.
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context, themeChanged);
-          },
+          icon: Icon(Icons.arrow_back, size: 24.sp),
+          onPressed: () => Navigator.pop(context, themeChanged),
         ),
       ),
-
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        // ENHANCEMENT 3 (Settings alignment): swapped hard-coded pixel
+        // values (EdgeInsets.all(20), radius 35, fontSize 22, etc.) for
+        // ScreenUtil's .w/.h/.r/.sp so spacing/scaling matches the rest
+        // of the app on different screen sizes.
+        padding: EdgeInsets.all(20.w),
         children: [
-
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 30),
-
+            padding: EdgeInsets.symmetric(vertical: 30.h),
             decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .primaryContainer,
-              borderRadius: BorderRadius.circular(20),
+              color: Theme.of(context).colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(20.r),
             ),
-
-            child: const Column(
+            child: Column(
               children: [
-
                 CircleAvatar(
-                  radius: 35,
-                  child: Icon(
-                    Icons.palette,
-                    size: 35,
-                  ),
+                  radius: 35.r,
+                  child: Icon(Icons.palette, size: 35.sp),
                 ),
-
-                SizedBox(height: 12),
-
-                Text(
-                  "Appearance",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                SizedBox(height: 12.h),
+                CustomText(
+                  text: 'Appearance',
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.bold,
                 ),
-
-                SizedBox(height: 4),
-
-                Text(
-                  "Customize your app theme",
-                ),
+                SizedBox(height: 4.h),
+                CustomText(text: 'Customize your app theme', fontSize: 13.sp),
               ],
             ),
           ),
-
-          const SizedBox(height: 25),
-
+          SizedBox(height: 25.h),
           Card(
             elevation: 3,
-
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(18.r),
             ),
-
             child: SwitchListTile(
-
               secondary: Text(
                 themeModel.isDark ? "🌙" : "🌞",
-                style: const TextStyle(fontSize: 26),
+                style: TextStyle(fontSize: 26.sp),
               ),
-
-              title: Text(
-                themeModel.isDark
-                    ? "Night Mode"
-                    : "Day Mode",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+              title: CustomText(
+                text: themeModel.isDark ? "Night Mode" : "Day Mode",
+                fontSize: 14.sp,
+                fontWeight: FontWeight.bold,
               ),
-
-              subtitle: Text(
-                themeModel.isDark
+              subtitle: CustomText(
+                text: themeModel.isDark
                     ? "Dark theme enabled"
                     : "Light theme enabled",
+                fontSize: 12.sp,
               ),
-
               value: themeModel.isDark,
-
-              // Changes theme and records the change.
               onChanged: (_) {
-
                 themeModel.toggleTheme();
-
-                setState(() {
-                  themeChanged = true;
-                });
+                setState(() => themeChanged = true);
               },
             ),
           ),

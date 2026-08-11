@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'product_screen.dart';
+import 'coming_soon_screen.dart';
 import '../widgets/custom_text.dart';
 
 class HomeScreen extends StatefulWidget {
   final String username;
 
-  const HomeScreen({
-    super.key,
-    this.username = '',
-  });
+  const HomeScreen({super.key, this.username = ''});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -18,7 +17,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-
   final PageController _pageController = PageController();
 
   @override
@@ -30,42 +28,35 @@ class _HomeScreenState extends State<HomeScreen> {
           automaticallyImplyLeading: false,
           elevation: 2,
           title: _selectedIndex == 0
-              ? Image.asset(
-                  'assets/images/NU_shield.svg',
-                  scale: 11.sp, 
-                )
+              ? Image.asset('assets/images/nubdexchange_logo.png', scale: 11.sp)
               : CustomText(
                   text: _selectedIndex == 1
                       ? 'Chat'
                       : _selectedIndex == 2
-                          ? 'Profile'
-                          : 'Home',
+                      ? 'Profile'
+                      : 'Home',
                   fontSize: 20.sp,
-                  // color: FB_LIGHT_PRIMARY,
                   fontWeight: FontWeight.w600,
                 ),
           actions: [
             IconButton(
-              icon: Icon(
-                Icons.settings,
-                size: 24.sp,
-              ),
-              onPressed: () =>
-                  Navigator.pushNamed(context, '/settings'),
+              icon: Icon(Icons.settings, size: 24.sp),
+              onPressed: () => Navigator.pushNamed(context, '/settings'),
             ),
           ],
         ),
         body: PageView(
           controller: _pageController,
           physics: const NeverScrollableScrollPhysics(),
+          // ENHANCEMENT (Coming Soon): Chat and Profile now render
+          // ComingSoonScreen instead of nothing. Shop still opens the
+          // real ProductScreen.
           children: const <Widget>[
             ProductScreen(),
+            ComingSoonScreen(label: 'Chat', icon: Icons.chat_bubble_outline),
+            ComingSoonScreen(label: 'Profile', icon: Icons.person_outline),
           ],
-          onPageChanged: (page) {
-            setState(() {
-              _selectedIndex = page;
-            });
-          },
+          onPageChanged: (page) => setState(() => _selectedIndex = page),
         ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
@@ -73,18 +64,9 @@ class _HomeScreenState extends State<HomeScreen> {
           showUnselectedLabels: false,
           onTap: _onTappedBar,
           items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.shop_2),
-              label: 'Shop',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat),
-              label: 'Chat',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.shop_2), label: 'Shop'),
+            BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
       ),
@@ -92,10 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onTappedBar(int value) {
-    setState(() {
-      _selectedIndex = value;
-    });
-
+    setState(() => _selectedIndex = value);
     _pageController.jumpToPage(value);
   }
 }
