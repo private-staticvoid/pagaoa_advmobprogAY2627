@@ -1,28 +1,24 @@
 import 'package:flutter/material.dart';
 
 class CustomText extends StatelessWidget {
+  final String text;
+  final double? fontSize;
+  final FontWeight? fontWeight;
+  final Color? color;
+  final int? maxLines;
+  final TextOverflow? overflow;
+  final TextAlign? textAlign;
+
   const CustomText({
     super.key,
     required this.text,
-    this.fontSize = 12,
-    this.fontFamily = 'Poppins',
-    this.fontWeight = FontWeight.normal,
-    this.textAlign = TextAlign.left,
-    this.letterSpacing = 0,
-    this.fontStyle = FontStyle.normal,
+    this.fontSize,
+    this.fontWeight,
+    this.color,
     this.maxLines,
     this.overflow,
+    this.textAlign,
   });
-
-  final String text;
-  final double fontSize;
-  final double letterSpacing;
-  final int? maxLines;
-  final TextOverflow? overflow;
-  final FontWeight fontWeight;
-  final TextAlign textAlign;
-  final String fontFamily;
-  final FontStyle fontStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -32,11 +28,9 @@ class CustomText extends StatelessWidget {
       overflow: overflow,
       textAlign: textAlign,
       style: TextStyle(
-        fontFamily: fontFamily,
         fontSize: fontSize,
         fontWeight: fontWeight,
-        fontStyle: fontStyle,
-        letterSpacing: letterSpacing,
+        color: color,
       ),
     );
   }

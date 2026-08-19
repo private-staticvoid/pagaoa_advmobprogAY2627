@@ -1,21 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../constants.dart';
+import '../models/cart.dart';
 import '../models/product.dart';
 import '../widgets/custom_text.dart';
 
-// ENHANCEMENT 2 (Details page): full detail view for a single Product,
-// pushed from ProductScreen when a card is tapped. Renders the fields
-// already available on the Product model (images, price, discount,
-// rating, description, shipping/warranty/return info, and reviews) —
-// no extra API call needed since the list endpoint already returns them.
-class ProductDetailScreen extends StatelessWidget {
+class ProductDetailScreen extends StatefulWidget {
   final Product product;
 
   const ProductDetailScreen({super.key, required this.product});
 
   @override
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+}
+
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  bool _addingToCart = false;
+
+  // ENHANCEMENT 3 (state management): this used to call CartService directly,
+  // which hit the API but never touched LocalCartStore — so the item would
+  // never actually show up back on CartScreen until the app reloaded.
+  // Routing through LocalCartStore.instance.addProduct() instead means:
+  //   1. The cart updates in memory immediately (existing product -> qty+1,
+  //      new product -> added with qty 1).
+  //   2. Every widget listening to LocalCartStore (CartScreen, the cart
+  //      badge on the FAB nav) rebuilds via notifyListeners() right away.
+  //   3. The POST /carts/add call still happens, just in the background,
+  //      inside the store itself.
+  Future<void> _addToCart() async {
+    setState(() => _addingToCart = true);
+    try {
+      LocalCartStore.instance.addProduct(widget.product);
+      // Tiny delay purely so the button's loading state is visible even
+      // though the local update above is instant — remove if you'd rather
+      // it feel instantaneous.
+      await Future.delayed(const Duration(milliseconds: 200));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${widget.product.title} added to cart')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Could not add to cart.')));
+    } finally {
+      if (mounted) setState(() => _addingToCart = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final product = widget.product;
     final discountedPrice =
         product.price - (product.price * product.discountPercentage / 100);
 
@@ -126,6 +163,29 @@ class ProductDetailScreen extends StatelessWidget {
                     fontSize: 13.sp,
                   ),
                 ],
+              ),
+
+              // ENHANCEMENT 3: Add to Cart action, now backed by LocalCartStore.
+              SizedBox(height: 16.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _addingToCart ? null : _addToCart,
+                  icon: _addingToCart
+                      ? SizedBox(
+                          width: 16.w,
+                          height: 16.w,
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.add_shopping_cart),
+                  label: CustomText(
+                    text: _addingToCart ? 'Adding...' : 'Add to Cart',
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
 
               SizedBox(height: 16.h),

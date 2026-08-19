@@ -23,22 +23,18 @@ class ProductScreen extends StatefulWidget {
 class _ProductScreenState extends State<ProductScreen> {
   late final Future<List<Product>> _productsFuture;
 
-  // ENHANCEMENT 1 (Search bar): controller for the search field.
   final TextEditingController _searchController = TextEditingController();
 
-  // ENHANCEMENT 1 (Search bar): _allProducts caches the full list once
-  // fetched so we can filter locally instead of re-hitting the API on
-  // every keystroke. _filteredProducts is what's actually shown.
   List<Product> _allProducts = [];
   List<Product> _filteredProducts = [];
+
+  List<String> _categories = [];
+  String? _selectedCategory;
 
   @override
   void initState() {
     super.initState();
     _productsFuture = ProductService().getAllProducts();
-
-    // ENHANCEMENT 1 (Search bar): re-filter whenever the text changes.
-    _searchController.addListener(_filterProducts);
   }
 
   @override
@@ -47,17 +43,122 @@ class _ProductScreenState extends State<ProductScreen> {
     super.dispose();
   }
 
-  // ENHANCEMENT 1 (Search bar): case-insensitive filter by product title.
   void _filterProducts() {
     final query = _searchController.text.trim().toLowerCase();
 
     setState(() {
-      _filteredProducts = query.isEmpty
-          ? _allProducts
-          : _allProducts
-                .where((p) => p.title.toLowerCase().contains(query))
-                .toList();
+      _filteredProducts = _allProducts.where((p) {
+        final matchesQuery =
+            query.isEmpty || p.title.toLowerCase().contains(query);
+        final matchesCategory =
+            _selectedCategory == null || p.category == _selectedCategory;
+        return matchesQuery && matchesCategory;
+      }).toList();
     });
+  }
+
+  void _onCategorySelected(String? category) {
+    setState(() {
+      _selectedCategory = _selectedCategory == category ? null : category;
+    });
+    _filterProducts();
+  }
+
+  IconData _iconForCategory(String category) {
+    final c = category.toLowerCase();
+
+    if (c.contains('furniture')) return Icons.chair_alt;
+    if (c.contains('grocery') ||
+        c.contains('groceries') ||
+        c.contains('food')) {
+      return Icons.fastfood;
+    }
+    if (c.contains('beauty') ||
+        c.contains('makeup') ||
+        c.contains('skin') ||
+        c.contains('fragrance')) {
+      return Icons.brush;
+    }
+    if (c.contains('smartphone') ||
+        c.contains('mobile') ||
+        c.contains('phone')) {
+      return Icons.smartphone;
+    }
+    if (c.contains('laptop') ||
+        c.contains('tablet') ||
+        c.contains('computer')) {
+      return Icons.laptop_mac;
+    }
+    if (c.contains('watch')) return Icons.watch;
+    if (c.contains('shoe') || c.contains('sneaker')) return Icons.snowshoeing;
+    if (c.contains('bag')) return Icons.shopping_bag;
+    if (c.contains('jewel')) return Icons.diamond;
+    if (c.contains('dress') ||
+        c.contains('shirt') ||
+        c.contains('top') ||
+        c.contains('cloth')) {
+      return Icons.checkroom;
+    }
+    if (c.contains('sunglass') || c.contains('glasses')) return Icons.sunny;
+    if (c.contains('decor') || c.contains('home')) return Icons.chair;
+    if (c.contains('kitchen')) return Icons.kitchen;
+    if (c.contains('vehicle') ||
+        c.contains('motorcycle') ||
+        c.contains('car')) {
+      return Icons.directions_car;
+    }
+    if (c.contains('electronic')) return Icons.devices_other;
+    if (c.contains('toy')) return Icons.toys;
+    if (c.contains('book')) return Icons.menu_book;
+    if (c.contains('sport')) return Icons.sports_soccer;
+
+    return Icons.category;
+  }
+
+  String _labelForCategory(String category) {
+    return category
+        .split(RegExp(r'[-_]'))
+        .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
+  }
+
+  Widget _buildCategoryChip({
+    required String label,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(right: 8.w),
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+          decoration: BoxDecoration(
+            color: selected ? Colors.black : Colors.transparent,
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(color: selected ? Colors.black : Colors.grey),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 16.sp,
+                color: selected ? Colors.white : Colors.black87,
+              ),
+              SizedBox(width: 6.w),
+              CustomText(
+                text: label,
+                fontSize: 13.sp,
+                color: selected ? Colors.white : Colors.black87,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -68,8 +169,6 @@ class _ProductScreenState extends State<ProductScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ENHANCEMENT 1 (Search bar): the old static "Search" box is
-            // now a real TextField bound to _searchController above.
             Container(
               width: ScreenUtil().screenWidth,
               padding: EdgeInsets.symmetric(horizontal: 12.w),
@@ -117,104 +216,140 @@ class _ProductScreenState extends State<ProductScreen> {
                   );
                 }
 
-                // ENHANCEMENT 1 (Search bar): populate the cache the first
-                // time the future resolves, respecting whatever is already
-                // typed in the search box.
                 if (_allProducts.isEmpty && snapshot.data != null) {
                   _allProducts = snapshot.data!;
+                  _categories =
+                      _allProducts.map((p) => p.category).toSet().toList()
+                        ..sort();
+
                   final query = _searchController.text.trim().toLowerCase();
-                  _filteredProducts = query.isEmpty
-                      ? _allProducts
-                      : _allProducts
-                            .where((p) => p.title.toLowerCase().contains(query))
-                            .toList();
+                  _filteredProducts = _allProducts.where((p) {
+                    final matchesQuery =
+                        query.isEmpty || p.title.toLowerCase().contains(query);
+                    final matchesCategory =
+                        _selectedCategory == null ||
+                        p.category == _selectedCategory;
+                    return matchesQuery && matchesCategory;
+                  }).toList();
                 }
 
                 final products = _filteredProducts;
 
-                if (products.isEmpty) {
-                  return Center(
-                    child: CustomText(
-                      text: 'No products found.',
-                      fontSize: 14.sp,
-                    ),
-                  );
-                }
-
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: products.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 10.w,
-                    mainAxisSpacing: 10.h,
-                    childAspectRatio: 0.75,
-                  ),
-                  itemBuilder: (context, index) {
-                    final product = products[index];
-
-                    // ENHANCEMENT 2 (Details page): wrap the card in a
-                    // GestureDetector so tapping it opens the new
-                    // ProductDetailScreen, passing the tapped product.
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                ProductDetailScreen(product: product),
-                          ),
-                        );
-                      },
-                      child: Card(
-                        elevation: 2,
-                        clipBehavior: Clip.antiAlias,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_categories.isNotEmpty) ...[
+                      SizedBox(
+                        height: 40.h,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
                           children: [
-                            Expanded(
-                              child: Image.network(
-                                product.thumbnail,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Center(
-                                    child: Icon(Icons.image, size: 24.sp),
-                                  );
-                                },
-                              ),
+                            _buildCategoryChip(
+                              label: 'All',
+                              icon: Icons.apps,
+                              selected: _selectedCategory == null,
+                              onTap: () => _onCategorySelected(null),
                             ),
-                            Padding(
-                              padding: EdgeInsets.all(8.r),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  CustomText(
-                                    text: product.title,
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.bold,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  SizedBox(height: 4.h),
-                                  CustomText(
-                                    text:
-                                        '\$${product.price.toStringAsFixed(2)}',
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ],
+                            ..._categories.map(
+                              (category) => _buildCategoryChip(
+                                label: _labelForCategory(category),
+                                icon: _iconForCategory(category),
+                                selected: _selectedCategory == category,
+                                onTap: () => _onCategorySelected(category),
                               ),
                             ),
                           ],
                         ),
                       ),
-                    );
-                  },
+                      SizedBox(height: 16.h),
+                    ],
+
+                    if (products.isEmpty)
+                      Center(
+                        child: CustomText(
+                          text: 'No products found.',
+                          fontSize: 14.sp,
+                        ),
+                      )
+                    else
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: products.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 10.w,
+                          mainAxisSpacing: 10.h,
+                          childAspectRatio: 0.75,
+                        ),
+                        itemBuilder: (context, index) {
+                          final product = products[index];
+
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ProductDetailScreen(product: product),
+                                ),
+                              );
+                            },
+                            child: Card(
+                              elevation: 2,
+                              clipBehavior: Clip.antiAlias,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Image.network(
+                                      product.thumbnail,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return Center(
+                                              child: Icon(
+                                                Icons.image,
+                                                size: 24.sp,
+                                              ),
+                                            );
+                                          },
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.all(8.r),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        CustomText(
+                                          text: product.title,
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.bold,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        SizedBox(height: 4.h),
+                                        CustomText(
+                                          text:
+                                              '\$${product.price.toStringAsFixed(2)}',
+                                          fontSize: 13.sp,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
                 );
               },
             ),

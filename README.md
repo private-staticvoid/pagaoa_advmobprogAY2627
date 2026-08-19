@@ -53,3 +53,16 @@ In short: JSON never goes straight to the screen. It always flows like this: API
 3. **Composition/Placeholder pattern for the nav** — instead of writing three different bespoke "not implemented" screens, `ComingSoonScreen` is one reusable widget parameterized by `label` and `icon`. This is a small instance of the Template/Strategy-ish reuse pattern — one component, multiple configurations, rather than duplicating layout code per tab.
 
 4. **Local reactive filtering (search)** — rather than re-querying the API per keystroke (which would be slow and wasteful), the search feature keeps the full list in memory (`_allProducts`) and derives a `_filteredProducts` view via a `TextEditingController` listener plus `setState`. This is a simple derived-state pattern — one source of truth, transformed on demand, which keeps the API layer completely untouched by UI-level search logic.
+
+## Laboratory 3 Discussion
+
+### Discuss how the Cart model, services, and screen interact with each other to render the API endpoint going to the same detail_screen.dart. Discuss the updated design pattern in this activity. Also discuss how to use getById at the Cart endpoint.
+
+**Cart model, service, and screen interaction:** The Cart model just holds the data structure, `CartService` is the one that actually fetches and parses the JSON from the API, and the screen calls that service (through a `FutureBuilder`) to display the carts — and since each cart item is really just a `Product` with a quantity, tapping it still routes to the same `ProductDetailScreen(product: product)` instead of building a whole new detail screen.
+
+So overall, I'd say the biggest thing I took from this activity is that once you set up the model → service → screen pattern properly for one feature (Product), adding a similar feature (Cart) becomes a lot faster because you're just repeating the same structure, and you can even reuse screens like the detail screen across features as long as they depend on the same underlying model.
+
+### New design patterns introduced in this activity
+
+1. **Layered architecture reinforced across features** — this activity basically reinforced separating things into layers: model (data), service (API calls), and screen (UI/state), so the screen doesn't touch the API directly anymore. Reusing `ProductDetailScreen` for cart items shows that once a detail screen depends on a model instead of a specific source, it can be reused anywhere that model shows up.
+2. **getById at the Cart endpoint** — to get a single cart, `CartService` calls `https://dummyjson.com/carts/{id}` and parses the response with `Cart.fromJson()`, so instead of fetching all carts and searching through them, we just ask for the one cart we already know the ID of.

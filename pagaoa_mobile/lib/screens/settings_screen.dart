@@ -22,7 +22,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        // ENHANCEMENT 3 (Settings alignment): CustomText + .sp instead of
+        // ENHANCEMENT 3 (Settings): CustomText + .sp instead of
         // plain Text, so this matches the typography used on Home/Product/
         // Detail screens rather than looking like a separate app.
         title: CustomText(
@@ -38,10 +38,6 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
       body: ListView(
-        // ENHANCEMENT 3 (Settings alignment): swapped hard-coded pixel
-        // values (EdgeInsets.all(20), radius 35, fontSize 22, etc.) for
-        // ScreenUtil's .w/.h/.r/.sp so spacing/scaling matches the rest
-        // of the app on different screen sizes.
         padding: EdgeInsets.all(20.w),
         children: [
           Container(
