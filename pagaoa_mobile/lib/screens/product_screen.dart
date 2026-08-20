@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-// Models
 import '../models/product.dart';
-
-// Services
 import '../services/product_service.dart';
-
-// Widgets
 import '../widgets/custom_text.dart';
-
-// Screens
 import 'product_detail_screen.dart';
+import '../providers/theme_provider.dart';
 
 class ProductScreen extends StatefulWidget {
   const ProductScreen({super.key});
@@ -123,36 +116,75 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   Widget _buildCategoryChip({
+    required BuildContext context,
     required String label,
     required IconData icon,
     required bool selected,
     required VoidCallback onTap,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final Color bgColor = selected
+        ? colorScheme.primary
+        : (isDark ? colorScheme.surfaceContainerHighest : Colors.white);
+    final Color borderColor = selected
+        ? colorScheme.primary
+        : colorScheme.outlineVariant;
+    final Color iconBadgeColor = selected
+        ? AppColors.gold
+        : (isDark ? Colors.white : colorScheme.primary.withValues(alpha: 0.10));
+    final Color iconColor = selected ? Colors.black87 : colorScheme.primary;
+    final Color textColor = selected
+        ? (isDark ? Colors.white : Colors.white)
+        : (isDark ? Colors.white : Colors.black87);
+
     return Padding(
-      padding: EdgeInsets.only(right: 8.w),
+      padding: EdgeInsets.only(right: 10.w),
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(
+            left: 6.w,
+            right: 14.w,
+            top: 6.h,
+            bottom: 6.h,
+          ),
           decoration: BoxDecoration(
-            color: selected ? Colors.black : Colors.transparent,
-            borderRadius: BorderRadius.circular(20.r),
-            border: Border.all(color: selected ? Colors.black : Colors.grey),
+            color: bgColor,
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(color: borderColor, width: 1.2),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: colorScheme.primary.withValues(alpha: 0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                size: 16.sp,
-                color: selected ? Colors.white : Colors.black87,
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 26.w,
+                height: 26.w,
+                decoration: BoxDecoration(
+                  color: iconBadgeColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 14.sp, color: iconColor),
               ),
-              SizedBox(width: 6.w),
+              SizedBox(width: 8.w),
               CustomText(
                 text: label,
                 fontSize: 13.sp,
-                color: selected ? Colors.white : Colors.black87,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                color: textColor,
               ),
             ],
           ),
@@ -247,6 +279,7 @@ class _ProductScreenState extends State<ProductScreen> {
                             _buildCategoryChip(
                               label: 'All',
                               icon: Icons.apps,
+                              context: context,
                               selected: _selectedCategory == null,
                               onTap: () => _onCategorySelected(null),
                             ),
@@ -254,6 +287,7 @@ class _ProductScreenState extends State<ProductScreen> {
                               (category) => _buildCategoryChip(
                                 label: _labelForCategory(category),
                                 icon: _iconForCategory(category),
+                                context: context,
                                 selected: _selectedCategory == category,
                                 onTap: () => _onCategorySelected(category),
                               ),

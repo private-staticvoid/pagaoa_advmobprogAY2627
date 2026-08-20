@@ -66,3 +66,19 @@ So overall, I'd say the biggest thing I took from this activity is that once you
 
 1. **Layered architecture reinforced across features** — this activity basically reinforced separating things into layers: model (data), service (API calls), and screen (UI/state), so the screen doesn't touch the API directly anymore. Reusing `ProductDetailScreen` for cart items shows that once a detail screen depends on a model instead of a specific source, it can be reused anywhere that model shows up.
 2. **getById at the Cart endpoint** — to get a single cart, `CartService` calls `https://dummyjson.com/carts/{id}` and parses the response with `Cart.fromJson()`, so instead of fetching all carts and searching through them, we just ask for the one cart we already know the ID of.
+
+## Laboratory 4 Discussion
+
+### Discuss how the user model, services and screen interact with each other to render the API endpoint going to the profile_screen. Discuss the updated design pattern in this activity. Also discuss how to use the saved data in rendering the cart_screen by user id.
+
+The user model, service, and screens each handle a different job. The user model, user.dart, just defines the shape of a user's data, id, username, email, token, and converts it to and from JSON. The user service is where the actual work happens, it calls the DummyJSON API to log in, builds the response into a user model, and saves it using shared preferences 2.5.5 so the session persists. The screens only handle UI, they call the service methods and display whatever comes back, they do not talk to the API or to storage directly.
+
+For the flow going to profile screen, the splash screen first calls the user service to check shared preferences for a saved session, this is the persistent authentication from enhancement one. If a session exists, it skips sign in and goes straight to home with the saved user data attached. The profile screen then reads that same user model data, either passed through navigation or pulled again from the service, and displays it in its own custom UI, no repeated API call needed.
+
+### Design Pattern
+
+The pattern here is about separating them into their own files instead of putting logic inside one widget. Before, a screen might handle its own API calls and storage directly. Now the project adds dedicated files for each responsibility, splash screen.dart for the entry point and auth check, sign in screen.dart for login UI and logic, user service.dart for API calls and shared preferences, and user.dart as the model. Each screen only imports and uses the service it needs. This makes the code more organized, since adding or fixing something, like changing how login works, only means editing user service, not touching every screen that uses it.
+
+### Rendering the Cart Screen by User ID
+
+Since the user model is already saved in shared preferences after login, the cart screen can call the user service to get that saved data anytime, without logging in again. It then takes the user id from that model and uses it to filter or fetch only the cart items belonging to that user. So the flow is, shared preferences holds the last saved user, the user service reads it and returns the user id, and the cart screen uses that id to load the correct cart. This keeps each user's cart personal and consistent even after closing and reopening the app.

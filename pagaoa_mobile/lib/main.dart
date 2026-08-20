@@ -6,6 +6,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 // Screens
+import 'screens/splash_screen.dart';
+import 'screens/signin_screen.dart';
+import 'screens/signup_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
 
@@ -15,9 +18,7 @@ import 'providers/theme_provider.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   await dotenv.load(fileName: 'assets/.env');
 
@@ -43,10 +44,15 @@ class RoblesAdvMobProg extends StatelessWidget {
             title: 'E-Commerce App',
             theme: themeModel.lightTheme,
             darkTheme: themeModel.darkTheme,
-            themeMode:
-                themeModel.isDark ? ThemeMode.dark : ThemeMode.light,
-            initialRoute: '/home',
+            themeMode: themeModel.isDark ? ThemeMode.dark : ThemeMode.light,
+            // Enhancement 1: app now boots into the splash screen, which
+            // decides between /home (persisted session found) and
+            // /signin (no session) — see splash_screen.dart.
+            initialRoute: '/splash',
             routes: {
+              '/splash': (context) => const SplashScreen(),
+              '/signin': (context) => const SignInScreen(),
+              '/signup': (context) => const SignUpScreen(), // Enhancement 2
               '/home': (context) => const HomeScreen(),
               '/settings': (context) => const SettingsPage(),
             },

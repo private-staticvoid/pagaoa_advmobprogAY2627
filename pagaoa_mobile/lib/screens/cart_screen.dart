@@ -2,16 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pagaoa_mobile/providers/theme_provider.dart';
 
-import '../constants.dart';
 import '../models/cart.dart';
 import '../services/product_service.dart';
 import '../widgets/custom_text.dart';
 import 'product_detail_screen.dart';
 
-// ENHANCEMENT 1: this screen is embedded as a PageView child inside
-// HomeScreen, which already owns the AppBar for the Cart tab — so this
-// widget must NOT have its own Scaffold/AppBar, or you get two headers
-// stacked on top of each other.
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
 
@@ -27,8 +22,6 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _refresh() async {
-    // Cart is local/temporary by design now — pull-to-refresh just
-    // re-syncs the visual list, nothing to re-fetch from the server.
     setState(() {});
   }
 
@@ -225,7 +218,7 @@ class _CartScreenState extends State<CartScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {}, // order placement is out of scope here
+                onPressed: () {},
                 child: CustomText(
                   text: 'Confirm Order',
                   fontSize: 15.sp,

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../constants.dart';
 import '../services/cart_service.dart';
+import '../services/user_service.dart'; // NEW — resolves the real logged-in userId
 import 'product.dart';
 
 class Cart {
@@ -53,9 +54,6 @@ class Cart {
     };
   }
 
-  // ENHANCEMENT: local-mutation helper. DummyJSON's cart-mutation endpoints
-  // are simulated and don't persist, so the UI updates this local copy
-  // directly instead of trusting a re-fetch.
   Cart copyWith({
     List<CartProduct>? products,
     double? total,
@@ -139,17 +137,6 @@ class CartProduct {
   }
 }
 
-/// ENHANCEMENT: single in-memory source of truth for the cart while the
-/// app is open. DummyJSON's POST /carts/add is simulated and never
-/// actually persists server-side, so CartScreen and ProductDetailScreen
-/// both read/write through here instead of trusting a re-fetch after
-/// every change.
-///
-/// This is the state-management piece: it's a ChangeNotifier, any widget
-/// that wraps itself in an AnimatedBuilder (or ListenableBuilder) listening
-/// to `LocalCartStore.instance` gets rebuilt automatically the moment the
-/// cart changes — whether the change came from the Cart tab's own stepper
-/// buttons or from tapping "Add to Cart" on a totally different screen.
 class LocalCartStore extends ChangeNotifier {
   LocalCartStore._internal();
   static final LocalCartStore instance = LocalCartStore._internal();
@@ -160,43 +147,80 @@ class LocalCartStore extends ChangeNotifier {
   bool _loading = false;
   bool get loading => _loading;
 
-  /// Total item count across the cart, handy for a badge on the cart icon.
+  // ============================================================
+  // ENHANCEMENT 3 — "render the cart by userId"
+  // ------------------------------------------------------------
+  // Previously loadInitial() always called
+  // CartService().getCartByUserId(demoUserId) — a hardcoded `1`, so
+  // every user saw the same cart. We now track which userId the
+  // currently-cached _cart belongs to (_loadedUserId) and resolve the
+  // REAL id from the persisted session via UserService().getUser().id
+  // (the same SharedPreferences-backed session that survives app
+  // restarts thanks to the splash screen's persistent-auth check).
+  //
+  // Call site is unchanged — cart_screen.dart still just calls
+  // `LocalCartStore.instance.loadInitial()` with no args — this method
+  // resolves "who's logged in right now" internally, and reloads
+  // automatically whenever that differs from what's cached (e.g. after
+  // a different user logs in).
+  // ============================================================
+  int? _loadedUserId;
+
   int get itemCount =>
       _cart?.products.fold<int>(0, (sum, p) => sum + p.quantity) ?? 0;
 
   Future<void> loadInitial() async {
-    if (_cart != null) return; // already loaded once this session
+    final effectiveUserId = await _resolveUserId();
+
+    // Already loaded for this exact user — nothing to do.
+    if (_cart != null && _loadedUserId == effectiveUserId) return;
+
     _loading = true;
     notifyListeners();
     try {
-      final cart = await CartService().getCartByUserId(demoUserId);
-      _cart = cart ?? _emptyCart();
+      final cart = await CartService().getCartByUserId(effectiveUserId);
+      _cart = cart ?? _emptyCart(effectiveUserId);
+      _loadedUserId = effectiveUserId;
     } catch (_) {
-      _cart = _emptyCart();
+      _cart = _emptyCart(effectiveUserId);
+      _loadedUserId = effectiveUserId;
     } finally {
       _loading = false;
       notifyListeners();
     }
   }
 
-  Cart _emptyCart() {
+  /// Falls back to `demoUserId` only when there's no logged-in user yet
+  /// (e.g. a guest browsing before signing in) so the app never crashes
+  /// on a missing id — but any real, logged-in user's own id always wins.
+  Future<int> _resolveUserId() async {
+    final user = await UserService().getUser();
+    return user.id != 0 ? user.id : demoUserId;
+  }
+
+  /// Call this on logout (see UserService.logout()) so the next person
+  /// to log in on this device doesn't briefly see the previous user's
+  /// cached cart before the new one loads.
+  void reset() {
+    _cart = null;
+    _loadedUserId = null;
+    notifyListeners();
+  }
+
+  Cart _emptyCart(int userId) {
     return Cart(
       id: 0,
       products: [],
       total: 0,
       discountedTotal: 0,
-      userId: demoUserId,
+      userId: userId,
       totalProducts: 0,
       totalQuantity: 0,
     );
   }
 
-  // ENHANCEMENT: called from ProductDetailScreen's "Add to Cart" button.
-  // Adds the product if it's not already in the cart, or bumps quantity
-  // by 1 if it already is. Updates local state immediately (so the Cart
-  // tab reflects it right away) and fires the API call in the background.
   void addProduct(Product product) {
-    final cart = _cart ?? _emptyCart();
+    final cart = _cart ?? _emptyCart(_loadedUserId ?? demoUserId);
     final index = cart.products.indexWhere((p) => p.id == product.id);
     final updatedProducts = List<CartProduct>.of(cart.products);
     int newQtyForApi;
@@ -239,10 +263,11 @@ class LocalCartStore extends ChangeNotifier {
     );
     notifyListeners();
 
+    final userId = _loadedUserId ?? demoUserId;
     unawaited(
       CartService()
           .addToCart(
-            userId: demoUserId,
+            userId: userId,
             productId: product.id,
             quantity: newQtyForApi,
           )
@@ -252,7 +277,6 @@ class LocalCartStore extends ChangeNotifier {
     );
   }
 
-  // ENHANCEMENT: quantity stepper in CartScreen.
   void changeQuantity(int productId, int delta) {
     final cart = _cart;
     if (cart == null) return;
@@ -281,9 +305,10 @@ class LocalCartStore extends ChangeNotifier {
     );
     notifyListeners();
 
+    final userId = _loadedUserId ?? demoUserId;
     unawaited(
       CartService()
-          .addToCart(userId: demoUserId, productId: productId, quantity: newQty)
+          .addToCart(userId: userId, productId: productId, quantity: newQty)
           .catchError((_) {
             return _cart!;
           }),

@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'product_screen.dart';
 import 'cart_screen.dart';
+import 'profile_screen.dart';
 import '../widgets/custom_text.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,10 +19,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
 
-  // ENHANCEMENT 1: bottom nav is now Shop / Cart / Profile — Cart is a
-  // real destination (matches the mockup) instead of only being reachable
-  // by tapping a product.
   static const int _cartIndex = 1;
+  static const int _profileIndex = 2;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
               : CustomText(
                   text: _selectedIndex == _cartIndex
                       ? 'Cart'
-                      : _selectedIndex == 2
+                      : _selectedIndex == _profileIndex
                       ? 'Profile'
                       : 'Home',
                   fontSize: 20.sp,
@@ -52,7 +51,13 @@ class _HomeScreenState extends State<HomeScreen> {
         body: PageView(
           controller: _pageController,
           physics: const NeverScrollableScrollPhysics(),
-          children: const <Widget>[ProductScreen(), CartScreen()],
+          // Enhancement 3: ProfileScreen (which renders the saved User +
+          // that user's cart) is now a real page in this PageView.
+          children: const <Widget>[
+            ProductScreen(),
+            CartScreen(),
+            ProfileScreen(),
+          ],
           onPageChanged: (page) => setState(() => _selectedIndex = page),
         ),
         bottomNavigationBar: BottomNavigationBar(
@@ -69,9 +74,6 @@ class _HomeScreenState extends State<HomeScreen> {
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
-        // ENHANCEMENT 2: Chat moved out of the bottom nav bar and into a
-        // FloatingActionButton. It's hidden entirely while on the Cart tab
-        // (index 1) so it never overlaps the "Confirm Order" bar.
         floatingActionButton: _selectedIndex == _cartIndex
             ? null
             : FloatingActionButton(

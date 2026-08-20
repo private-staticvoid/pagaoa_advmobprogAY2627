@@ -16,10 +16,6 @@ class ProductService {
     }
   }
 
-  // ENHANCEMENT 1: cart_screen only has a CartProduct (id, title, price,
-  // quantity, thumbnail) for each line item — not a full Product. Tapping
-  // a cart item fetches the full Product by id so it can be handed to the
-  // existing ProductDetailScreen widget unchanged.
   Future<Product> getProductById(int id) async {
     final response = await http.get(Uri.parse('$host/products/$id'));
 

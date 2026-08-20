@@ -22,9 +22,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        // ENHANCEMENT 3 (Settings): CustomText + .sp instead of
-        // plain Text, so this matches the typography used on Home/Product/
-        // Detail screens rather than looking like a separate app.
         title: CustomText(
           text: 'Settings',
           fontSize: 20.sp,

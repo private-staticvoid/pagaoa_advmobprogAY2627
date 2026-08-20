@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../constants.dart';
 import '../models/cart.dart';
 import '../models/product.dart';
 import '../widgets/custom_text.dart';
@@ -18,23 +17,10 @@ class ProductDetailScreen extends StatefulWidget {
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _addingToCart = false;
 
-  // ENHANCEMENT 3 (state management): this used to call CartService directly,
-  // which hit the API but never touched LocalCartStore — so the item would
-  // never actually show up back on CartScreen until the app reloaded.
-  // Routing through LocalCartStore.instance.addProduct() instead means:
-  //   1. The cart updates in memory immediately (existing product -> qty+1,
-  //      new product -> added with qty 1).
-  //   2. Every widget listening to LocalCartStore (CartScreen, the cart
-  //      badge on the FAB nav) rebuilds via notifyListeners() right away.
-  //   3. The POST /carts/add call still happens, just in the background,
-  //      inside the store itself.
   Future<void> _addToCart() async {
     setState(() => _addingToCart = true);
     try {
       LocalCartStore.instance.addProduct(widget.product);
-      // Tiny delay purely so the button's loading state is visible even
-      // though the local update above is instant — remove if you'd rather
-      // it feel instantaneous.
       await Future.delayed(const Duration(milliseconds: 200));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -165,7 +151,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ],
               ),
 
-              // ENHANCEMENT 3: Add to Cart action, now backed by LocalCartStore.
               SizedBox(height: 16.h),
               SizedBox(
                 width: double.infinity,
