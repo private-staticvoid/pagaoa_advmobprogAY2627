@@ -1,17 +1,11 @@
-// ============================================================
 // ENHANCEMENT 2 — Sign-in screen
-// ------------------------------------------------------------
-// * Custom UI: card-based form on the maroon/gold theme instead of the
-//   plain boxed fields in the sample screenshot.
-// * Wires to UserService.loginUser(username, password), which already
-//   persists the session on success (see user_service.dart) — that's
-//   what enables the splash screen's persistent-auth check next launch.
-// * Password visibility toggle via the shared PasswordField widget.
-// * Link to the new /signup screen, plus a "Demo accounts" hint box,
-//   since DummyJSON's login only accepts its own seeded demo users.
-// * Full-screen BrandLoadingView (from splash_screen.dart) overlays the
-//   form while logging in, instead of just a spinner in the button.
-// ============================================================
+// Custom UI: card-based form on the maroon/gold theme
+// Wires to UserService.loginUser(username, password), which already
+// persists the session on success
+// Link to the new /signup screen, plus a "Demo accounts" hint box,
+// since DummyJSON's login only accepts its own seeded demo users.
+// Full-screen BrandLoadingView (from splash_screen.dart) overlays the
+// form while logging in, instead of just a spinner in the button.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';

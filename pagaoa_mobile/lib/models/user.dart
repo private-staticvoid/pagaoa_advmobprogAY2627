@@ -1,15 +1,5 @@
-// models/user.dart
-//
-// ============================================================
 // ENHANCEMENT 3 — User model
-// ------------------------------------------------------------
-// You said you didn't have a `user.dart` model yet — this is it.
-// It mirrors exactly what DummyJSON's `POST /auth/login` returns, so
-// `User.fromJson(loginResponseBody)` works directly with no mapping
-// glue code. UserService uses this model to type-check every field it
-// writes into / reads out of SharedPreferences (see user_service.dart),
-// and ProfileScreen renders straight from a `User` instance.
-// ============================================================
+// `User.fromJson(loginResponseBody)` works directly with no mapping UserService uses this model to type-check every field it writes
 
 class User {
   final int id;
@@ -53,7 +43,7 @@ class User {
 
   bool get isEmpty => id == 0 && username.isEmpty;
 
-  /// Builds a [User] from a DummyJSON auth response, or from the flat
+  /// Builds a user from a DummyJSON auth response, or from the flat
   /// map UserService.getUserData() returns when reading SharedPreferences
   /// back out. Handles both `accessToken` (current DummyJSON field name)
   /// and the older `token` field name defensively, since API docs and

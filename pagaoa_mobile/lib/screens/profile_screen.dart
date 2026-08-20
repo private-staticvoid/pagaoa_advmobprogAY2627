@@ -1,18 +1,13 @@
-// screens/profile_screen.dart
-//
-// ============================================================
 // ENHANCEMENT 3 — Profile screen
-// ------------------------------------------------------------
-// * Reads the saved session via UserService.getUser() -> typed User
-//   (models/user.dart). All the header/detail UI below renders from
-//   that instance.
-// * "Based on the saved user data render the cart by userId": listens
+//   Reads the saved session via UserService.getUser() typed User (models/user.dart).
+//   All the header/detail UI below renders from that instance.
+//   Based on the saved user data render the cart by userId": listens
 //   to the project's real LocalCartStore (models/cart.dart), which now
 //   resolves the logged-in user's own id internally (see the
 //   loadInitial()/_resolveUserId() patch in models/cart.dart) instead
 //   of the old hardcoded demoUserId. Same store the Cart tab uses, so
 //   both stay in sync automatically.
-// ============================================================
+//
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -100,7 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: ListView(
         padding: EdgeInsets.all(16.w),
         children: [
-          // ---- Header card: avatar + name + username, from User model.
+          // Header card: avatar + name + username, from User model.
           Card(
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 28.h, horizontal: 16.w),
@@ -143,7 +138,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           SizedBox(height: 16.h),
 
-          // ---- Details card
+          // Details card
           Card(
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 4.w),
@@ -172,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           SizedBox(height: 16.h),
 
-          // ---- Cart-by-userId summary — driven by the shared LocalCartStore.
+          // Cart-by-userId summary — driven by the shared LocalCartStore.
           Text(
             'Your Cart Summary',
             style: TextStyle(
