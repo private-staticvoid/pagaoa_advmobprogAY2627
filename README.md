@@ -82,3 +82,46 @@ The pattern here is about separating them into their own files instead of puttin
 ### Rendering the Cart Screen by User ID
 
 Since the user model is already saved in shared preferences after login, the cart screen can call the user service to get that saved data anytime, without logging in again. It then takes the user id from that model and uses it to filter or fetch only the cart items belonging to that user. So the flow is, shared preferences holds the last saved user, the user service reads it and returns the user id, and the cart screen uses that id to load the correct cart. This keeps each user's cart personal and consistent even after closing and reopening the app.
+
+## Laboratory 5 Discussion
+
+### Discuss the workflow for the DummyJSON and Firebase implementation, from signIn to signUp. What is the main idea of the UserService implementation? What are the benefits of the Firebase implementation in this application?
+
+The app now supports two login backends, and the user picks one with a toggle on the sign in and sign up screens. Whichever one is used, the session is saved with a `LoginType` (`dummyJson` or `firebase`) so the rest of the app knows where the user came from.
+
+**DummyJSON workflow.** On sign in, the user types a username and password and `UserService.loginUser()` sends `POST /auth/login`. DummyJSON returns the user plus an `accessToken` and `refreshToken`. Since the login response does not include age and phone, the service uses the new token to call `GET /auth/me` for the full profile. Everything is saved to SharedPreferences through `saveUserData()` and the user goes to home. On the next launch, the splash screen checks the saved token and tries `POST /auth/refresh` to get a fresh one. Sign up is the weak point: `POST /users/add` is only simulated. DummyJSON answers with a realistic new user and id, but never saves it, so that account can never log in. Only the seeded demo accounts (like `emilys`) work, and there is nothing real to update or delete, so the profile screen shows those accounts as read-only.
+
+**Firebase workflow.** Sign up starts with the form (first name, last name, age, contact no., username, email, password), which is validated first, including a live password checklist (8+ characters, uppercase, lowercase, number, special character). `registerWithFirebase()` calls `createAccount()` (`createUserWithEmailAndPassword`), which creates a real account and signs the user in at the same time. The username is set with `updateDisplayName()`. Firebase Auth only stores email, password and display name, so the other fields are saved in a Cloud Firestore document at `users/{uid}`, using the same field names as DummyJSON (`firstName`, `age`, `phone`, ...) so one `User.fromJson()` can read both. The session is saved to SharedPreferences and the user goes straight to home. Sign in uses email and password with `signIn()`, then reads the Firestore profile and saves the session. On the next launch, the splash screen uses `authStateChanges()` to see if Firebase restored the user, then forces a token refresh with `getIdToken(true)`. If the account was deleted or disabled in the Firebase Console, the refresh fails and the app logs the user out. From the profile screen, a Firebase user can update the username, change the password (`resetPasswordFromCurrentPassword()`, which re-authenticates with the current password first), and delete the account (`deleteAccount()`, which re-authenticates, deletes the Firestore document, then deletes the user). Logout, from the profile screen or settings, calls `signOut()`, clears the saved session and token, and sends the user back to sign in.
+
+|                                   | DummyJSON                                                              | Firebase                                                            |
+| --------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Sign in                           | `POST /auth/login` with username                                       | `signInWithEmailAndPassword` with email                             |
+| Sign up                           | `POST /users/add` (simulated, not saved)                               | `createUserWithEmailAndPassword` (real account) + Firestore profile |
+| Token                             | `accessToken` / `refreshToken`, refreshed manually via `/auth/refresh` | ID token, refreshed automatically by the SDK                        |
+| Session on device                 | SharedPreferences                                                      | Firebase SDK + SharedPreferences                                    |
+| Update / change password / delete | Not possible (mock API)                                                | Supported                                                           |
+| Data security                     | Public demo data                                                       | Passwords handled by Google, Firestore security rules               |
+
+**Main idea of UserService.** `UserService` is the single gateway for everything about the user. The screens only call methods like `loginUser()`, `loginWithFirebase()`, `registerWithFirebase()`, `updateUsername()` or `logout()`. They never touch `http`, `FirebaseAuth`, Firestore or SharedPreferences directly. Both backends end in the same `saveUserData()` and the same `User` model, so the splash screen, profile screen and cart work the same no matter which backend was used. Adding Firebase in this lab did not require changing the cart code at all. If the app later switches to another backend, only `UserService` needs to change.
+
+**Benefits of Firebase in this app.** Accounts are now real and persistent, instead of only a few shared demo users. Passwords are never stored by the app; Firebase handles them securely. Tokens refresh automatically, and features like re-authentication, password change and account deletion come built in, so we did not have to build our own server. Firestore security rules make sure each user can only read and write their own profile document. The Firebase Console also gives control from outside the app: disabling or deleting a user there logs them out the next time the app opens. All of this runs on the free Spark plan.
+
+### Design Pattern
+
+1. **Facade (UserService)** — one class hides the details of two different backends behind simple methods.
+2. **LoginType as a switch between backends** — the enum is saved with the session, and the splash screen, profile screen and logout use it to pick the right behavior (for example, which details to show and whether account actions are available).
+3. **Shared validation in `utils/`** — `validators.dart` holds every form rule and `auth_errors.dart` turns Firebase error codes into friendly messages, so no screen repeats that logic.
+4. **Reusable widgets** — `password_requirements.dart` (live checklist) and `account_dialogs.dart` (update username, change password, delete account) keep the screens short and readable.
+
+### Firestore security rules used
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```

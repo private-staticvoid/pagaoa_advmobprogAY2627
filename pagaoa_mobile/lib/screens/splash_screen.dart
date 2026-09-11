@@ -130,25 +130,23 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  /// Enhancement 1: check persisted session, then route.
+  /// Lab 4: check the persisted session, then route.
+  /// Lab 5: works for both LoginTypes, and refreshes the token first
+  /// (Firebase ID token / DummyJSON refreshToken). If the backend says the
+  /// session is dead (e.g. account deleted in the Firebase Console), we log
+  /// out and send the user to sign in.
   Future<void> _checkAuthentication() async {
-    // Small delay so the entrance animation is actually visible — not a
-    // fake artificial wait for its own sake, just long enough to match
-    // the animation duration above.
+    // Small delay so the entrance animation is visible.
     await Future.delayed(const Duration(milliseconds: 1600));
 
-    final loggedIn = await _userService.isLoggedIn();
+    var loggedIn = await _userService.isLoggedIn();
+    if (loggedIn) {
+      loggedIn = await _userService.refreshSession();
+      if (!loggedIn) await _userService.logout();
+    }
     if (!mounted) return;
 
-    if (loggedIn) {
-      // Session found in SharedPreferences then skip sign-in, go home.
-      final userData = await _userService.getUserData();
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/home', arguments: userData);
-    } else {
-      // No valid session then user must sign in.
-      Navigator.pushReplacementNamed(context, '/signin');
-    }
+    Navigator.pushReplacementNamed(context, loggedIn ? '/home' : '/signin');
   }
 
   @override

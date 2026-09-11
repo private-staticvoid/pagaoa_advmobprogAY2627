@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
 
-// COLOR PALETTE CHANGE: switched the app's palette from the previous
-// navy/indigo scheme to maroon, with a warm gold accent kept for
-// prices/CTAs (matches the existing cart mockup) and modern, softly
-// rounded surfaces (cards, buttons, inputs all use large radii + low,
-// diffuse elevation instead of hard Material 2 shadows).
 class AppColors {
   static const Color maroon = Color(0xFF7A1F2B); // primary
   static const Color maroonDark = Color(0xFF4E1119); // primary, dark mode

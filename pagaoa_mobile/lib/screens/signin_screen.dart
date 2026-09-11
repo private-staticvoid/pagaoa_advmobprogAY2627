@@ -1,18 +1,20 @@
-// ENHANCEMENT 2 — Sign-in screen
-// Custom UI: card-based form on the maroon/gold theme
-// Wires to UserService.loginUser(username, password), which already
-// persists the session on success
-// Link to the new /signup screen, plus a "Demo accounts" hint box,
-// since DummyJSON's login only accepts its own seeded demo users.
-// Full-screen BrandLoadingView (from splash_screen.dart) overlays the
-// form while logging in, instead of just a spinner in the button.
+// Sign in screen (Lab 4, updated for Lab 5)
+// Lab 5: a toggle at the top chooses the backend:
+//   DummyJSON -> username + password -> UserService.loginUser()
+//   Firebase  -> email + password    -> UserService.loginWithFirebase()
+// Both save the session with a LoginType, then go to /home.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import '../constants.dart';
+import '../models/login_type.dart';
 import '../providers/theme_provider.dart';
 import '../services/user_service.dart';
-import 'splash_screen.dart';
+import '../utils/auth_errors.dart';
+import '../utils/validators.dart';
 import '../widgets/password_field.dart';
+import 'splash_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -23,49 +25,58 @@ class SignInScreen extends StatefulWidget {
 
 class _SignInScreenState extends State<SignInScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  final _identifierController = TextEditingController(); // username OR email
   final _passwordController = TextEditingController();
   final _userService = UserService();
 
+  LoginType _loginType = LoginType.firebase;
   bool _isLoading = false;
+
+  bool get _isFirebase => _loginType == LoginType.firebase;
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
-
+    FocusScope.of(context).unfocus();
     setState(() => _isLoading = true);
 
     try {
-      // UserService.loginUser already calls saveUserData() internally on
-      // success, so by the time this returns the session is persisted.
-      final response = await _userService.loginUser(
-        _usernameController.text.trim(),
-        _passwordController.text,
-      );
+      final id = _identifierController.text.trim();
+      final password = _passwordController.text;
+
+      if (_isFirebase) {
+        await _userService.loginWithFirebase(email: id, password: password);
+      } else {
+        await _userService.loginUser(id, password);
+      }
 
       if (!mounted) return;
-      // Note: not resetting _isLoading here on purpose — this screen is
-      // about to be replaced, so the overlay just stays up until then
-      // instead of flashing back to the form for a frame.
-      Navigator.pushReplacementNamed(context, '/home', arguments: response);
+      Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Login failed: ${e.toString().replaceFirst('Exception: ', '')}',
-          ),
+          content: Text('Login failed: ${friendlyAuthError(e)}'),
           backgroundColor: Colors.red.shade700,
         ),
       );
     }
+  }
+
+  void _switchType(LoginType type) {
+    setState(() {
+      _loginType = type;
+      _identifierController.clear();
+      _passwordController.clear();
+    });
+    _formKey.currentState?.reset();
   }
 
   @override
@@ -82,7 +93,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(height: 24.h),
+                    SizedBox(height: 16.h),
                     Icon(
                       Icons.storefront_rounded,
                       color: AppColors.maroon,
@@ -107,33 +118,64 @@ class _SignInScreenState extends State<SignInScreen> {
                         color: Colors.grey.shade600,
                       ),
                     ),
-                    SizedBox(height: 32.h),
+                    SizedBox(height: 28.h),
+
+                    // Lab 5: choose the backend.
+                    SegmentedButton<LoginType>(
+                      showSelectedIcon: false,
+                      segments: const [
+                        ButtonSegment(
+                          value: LoginType.firebase,
+                          label: Text('Firebase'),
+                          icon: Icon(Icons.local_fire_department_outlined),
+                        ),
+                        ButtonSegment(
+                          value: LoginType.dummyJson,
+                          label: Text('DummyJSON'),
+                          icon: Icon(Icons.cloud_outlined),
+                        ),
+                      ],
+                      selected: {_loginType},
+                      onSelectionChanged: (s) => _switchType(s.first),
+                    ),
+                    SizedBox(height: 20.h),
 
                     TextFormField(
-                      controller: _usernameController,
+                      controller: _identifierController,
                       textInputAction: TextInputAction.next,
+                      keyboardType: _isFirebase
+                          ? TextInputType.emailAddress
+                          : TextInputType.text,
                       decoration: InputDecoration(
-                        labelText: 'Username',
-                        prefixIcon: Icon(Icons.person_outline, size: 20.sp),
+                        labelText: _isFirebase ? 'Email' : 'Username',
+                        prefixIcon: Icon(
+                          _isFirebase
+                              ? Icons.email_outlined
+                              : Icons.person_outline,
+                          size: 20.sp,
+                        ),
                       ),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Please enter your username'
-                          : null,
+                      validator: _isFirebase
+                          ? Validators.email
+                          : (v) => Validators.required(v, field: 'Username'),
                     ),
                     SizedBox(height: 16.h),
 
-                    // Enhancement 2: password field with visibility toggle.
+                    // Login only checks that a password was typed; the
+                    // strength rules are enforced on sign up.
                     PasswordField(
                       controller: _passwordController,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _login(),
+                      validator: (v) =>
+                          Validators.required(v, field: 'Password'),
                     ),
                     SizedBox(height: 28.h),
 
                     ElevatedButton(
                       onPressed: _isLoading ? null : _login,
                       child: Text(
-                        'Log In',
+                        'Log In with ${_loginType.label}',
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
@@ -165,19 +207,55 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 28.h),
+                    SizedBox(height: 24.h),
 
-                    // Helper box: DummyJSON only authenticates its seeded
+                    if (!_isFirebase) _buildDemoAccounts(),
                   ],
                 ),
               ),
             ),
           ),
 
-          // Full-screen brand loading view, shown over the form while
-          // _login() is in flight.
           if (_isLoading)
             const Positioned.fill(child: BrandLoadingView(subtitle: null)),
+        ],
+      ),
+    );
+  }
+
+  /// DummyJSON only accepts its own seeded users — tap one to fill the form.
+  Widget _buildDemoAccounts() {
+    return Container(
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: AppColors.maroonLight,
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'DummyJSON demo accounts (tap to fill)',
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w700,
+              color: AppColors.maroon,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Wrap(
+            spacing: 8.w,
+            runSpacing: 6.h,
+            children: demoAccounts.map((acc) {
+              return ActionChip(
+                label: Text(acc['username']!),
+                onPressed: () {
+                  _identifierController.text = acc['username']!;
+                  _passwordController.text = acc['password']!;
+                },
+              );
+            }).toList(),
+          ),
         ],
       ),
     );
