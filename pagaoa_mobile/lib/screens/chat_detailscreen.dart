@@ -77,11 +77,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   // Marks the other person's unread messages as seen while I'm reading them.
   void _markIncomingAsSeen(List<QueryDocumentSnapshot> docs) {
-    final unseen = docs.where((doc) {
-      final data = doc.data() as Map<String, dynamic>;
-      return data['senderId']?.toString() != widget.currentUserId &&
-          data['seen'] != true;
-    }).map((doc) => doc.id).toList();
+    final unseen = docs
+        .where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return data['senderId']?.toString() != widget.currentUserId &&
+              data['seen'] != true;
+        })
+        .map((doc) => doc.id)
+        .toList();
 
     if (unseen.isEmpty) return;
     // Run after the frame so a Firestore write never happens mid-build.
@@ -171,10 +174,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         }
         if (snapshot.hasError) {
           return Center(
-            child: CustomText(
-              text: 'Error loading messages.',
-              fontSize: 14.sp,
-            ),
+            child: CustomText(text: 'Error loading messages.', fontSize: 14.sp),
           );
         }
 
@@ -209,9 +209,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final text = data['message']?.toString() ?? '';
     final isMine = data['senderId']?.toString() == widget.currentUserId;
 
-    // hasPendingWrites is true while the write is still only in the local
-    // cache, which is exactly the "sending..." state.
-    final isSending = doc.metadata.hasPendingWrites;
+    // hasPendingWrites is true while a write is still only in the local cache.
+    // It also turns true on the other person's messages while my "seen" update
+    // syncs, so this only counts as sending on my own messages.
+    final isSending = isMine && doc.metadata.hasPendingWrites;
     final isSeen = data['seen'] == true;
     final isNew = _animated.add(doc.id);
 
