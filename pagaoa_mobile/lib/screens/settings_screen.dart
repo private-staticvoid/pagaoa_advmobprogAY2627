@@ -8,7 +8,7 @@ import '../providers/theme_provider.dart';
 import '../services/user_service.dart';
 import '../widgets/custom_text.dart';
 
-// Settings page: theme (Lab 1) + Account / Logout (Lab 5, Enhancement 3).
+// Settings page: theme switch plus the account and logout section.
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -126,7 +126,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           SizedBox(height: 25.h),
 
-          // ---------------- Lab 5: Account ----------------
+          // Account
           Padding(
             padding: EdgeInsets.only(left: 4.w, bottom: 8.h),
             child: CustomText(

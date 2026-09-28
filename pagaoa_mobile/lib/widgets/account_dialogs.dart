@@ -1,10 +1,5 @@
-// LAB 5 — Account management dialogs (Profile screen, Firebase accounts)
-//   showUpdateUsernameDialog  -> UserService.updateUsername
-//   showChangePasswordDialog  -> UserService.resetPasswordFromCurrentPassword
-//   showDeleteAccountDialog   -> UserService.deleteAccount
-//
-// Each dialog runs the action itself, shows a spinner while waiting, shows
-// the error INSIDE the dialog if it fails, and returns `true` on success.
+// The account dialogs used by the profile screen. Each one runs its own
+// action, shows the error inside the dialog, and returns true on success.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';

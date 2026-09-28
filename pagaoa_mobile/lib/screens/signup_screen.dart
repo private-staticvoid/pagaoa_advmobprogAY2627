@@ -1,13 +1,6 @@
-// Sign up screen (Lab 5 — Enhancement 2)
-// Fields required by the handout (named like dummyjson.com/users):
-//   fName -> firstName, lName -> lastName, age, contactNo -> phone,
-//   username, emailAddress -> email, password (with validation)
-//
-// Backend toggle:
-//   Firebase  (default) -> REAL account: FirebaseAuth + Firestore profile,
-//                          then goes straight to /home (already signed in).
-//   DummyJSON           -> POST /users/add, which is only SIMULATED, so we
-//                          explain that and send the user back to sign in.
+// Sign up screen. Field names follow dummyjson.com/users.
+// Firebase makes a real account plus a Firestore profile, then goes to /home.
+// DummyJSON only simulates the sign up, so a dialog explains that instead.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -90,7 +83,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Welcome, $firstName! Account created.')),
         );
-        // createUserWithEmailAndPassword also signs the user in.
+        // Creating the account already signs the user in.
         Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
       } else {
         final result = await _userService.registerUser(
@@ -178,10 +171,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ? 'Creates a real account you can log in with.'
                       : 'Simulated only — DummyJSON will not save it.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600),
                 ),
                 SizedBox(height: 20.h),
 

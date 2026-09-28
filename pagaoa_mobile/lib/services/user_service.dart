@@ -1,18 +1,13 @@
-// UserService — the ONE place in the app that knows how to log in, sign up,
-// log out and manage accounts. Screens never call http / FirebaseAuth /
-// Firestore / SharedPreferences directly; they only call methods here.
-//
-// Lab 4: DummyJSON login + SharedPreferences session (kept, still works).
-// Lab 5: Firebase Authentication + Cloud Firestore profile, and a LoginType
-//        so the rest of the app knows which backend the session came from.
+// The one place that knows how to log in, sign up, log out and manage
+// accounts. Screens never call http, FirebaseAuth, Firestore or
+// SharedPreferences directly, they only call methods here.
 
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-// `as fb` because firebase_auth also has a class called `User`, which would
-// clash with OUR `User` model in models/user.dart. So Firebase's user is
-// written `fb.User` in this file.
+// Imported as fb because firebase_auth also has a User class, which would
+// clash with my own User model. Firebase's one is written fb.User here.
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -23,9 +18,8 @@ import '../models/cart.dart';
 import '../models/login_type.dart';
 import '../models/user.dart';
 
-/// globally reachable UserService. Screens in this
-/// project create `UserService()` directly, which works the same way since
-/// the class keeps no private state of its own.
+/// Globally reachable instance. Screens can also just create UserService()
+/// since this class keeps no private state of its own.
 ValueNotifier<UserService> userService = ValueNotifier(UserService());
 
 /// SharedPreferences keys, kept in one place so nothing can typo a key.
@@ -49,7 +43,7 @@ class _Keys {
 class UserService {
   static const _timeout = Duration(seconds: 8);
 
-  //  FIREBASE AUTH  (the code snippet from the lab handout)
+  // Firebase Auth
 
   final fb.FirebaseAuth firebaseAuth = fb.FirebaseAuth.instance;
 
@@ -85,8 +79,8 @@ class UserService {
     final user = _requireFirebaseUser();
     await user.updateDisplayName(username);
 
-    // Lab 5 extra: keep Firestore + the local session in sync so the new
-    // username shows up everywhere right away.
+    // Keep Firestore and the saved session in sync so the new username
+    // shows up everywhere right away.
     await _writeProfileDoc(user.uid, {'username': username});
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_Keys.username, username);
@@ -127,8 +121,8 @@ class UserService {
     await user.updatePassword(newPassword);
   }
 
-  //  FIREBASE — what the screens actually call
-  //  (wraps signIn/createAccount above + saves the session + profile)
+  // What the screens actually call. These wrap the methods above and also
+  // save the session and the Firestore profile.
 
   /// Sign in screen (Firebase mode).
   Future<User> loginWithFirebase({
@@ -211,12 +205,11 @@ class UserService {
     return user;
   }
 
-  // ---------------- Firestore profile document: users/{uid} ----------------
-  // Wrapped in try/catch + timeout so a Firestore problem (e.g. database
-  // not created yet) never crashes login — it just logs to the console.
+  // Firestore profile document: users/{uid}. Wrapped in try/catch with a
+  // timeout so a Firestore problem never crashes login.
 
   CollectionReference<Map<String, dynamic>> get _usersCollection =>
-      FirebaseFirestore.instance.collection('users');
+      FirebaseFirestore.instance.collection(usersCollection);
 
   Future<Map<String, dynamic>?> _readProfileDoc(String uid) async {
     try {
@@ -247,7 +240,7 @@ class UserService {
     }
   }
 
-  //  DUMMYJSON  (Lab 4 — unchanged behaviour, now also tagged with LoginType)
+  // DummyJSON
 
   /// POST /auth/login  (username + password of a DummyJSON demo user)
   Future<Map<String, dynamic>> loginUser(
@@ -305,9 +298,9 @@ class UserService {
     return null;
   }
 
-  /// POST /users/add — DummyJSON only SIMULATES this. It returns a new user
-  /// object but never saves it, so that account can't log in afterwards.
-  /// Kept for comparison with Firebase (see the discussion in README.md).
+  /// POST /users/add. DummyJSON only simulates this, it returns a new user
+  /// but never saves it, so that account can never log in. Kept for the
+  /// comparison with Firebase in the README.
   Future<Map<String, dynamic>> registerUser({
     required String firstName,
     required String lastName,
@@ -341,7 +334,7 @@ class UserService {
     throw Exception(decoded['message']?.toString() ?? 'Sign up failed');
   }
 
-  //  SESSION  (shared by both backends)
+  // Session, shared by both backends
 
   /// Saves the session to SharedPreferences (goes through User.fromJson so
   /// every value is type-checked by the model).
@@ -365,8 +358,7 @@ class UserService {
     await prefs.setBool(_Keys.isLoggedIn, user.accessToken.isNotEmpty);
   }
 
-  /// Enhancement 3 of the handout: "Fetch user data via
-  /// UserService().getUserData()". Returns the saved session as a map.
+  /// Returns the saved session as a map.
   Future<Map<String, dynamic>> getUserData() async {
     final prefs = await SharedPreferences.getInstance();
     return {
@@ -411,10 +403,10 @@ class UserService {
     return token.isNotEmpty;
   }
 
-  /// TOKEN REFRESH — called by the splash screen after isLoggedIn().
-  /// Returns false only when the backend says the session is really dead
-  /// (e.g. account deleted/disabled in the Firebase Console). If we're just
-  /// offline, it returns true so the app still opens, like in Lab 4.
+  /// Token refresh, called by the splash screen after isLoggedIn(). Returns
+  /// false only when the backend says the session is really dead, like when
+  /// the account was deleted from the console. If the phone is just offline
+  /// it returns true so the app still opens.
   Future<bool> refreshSession() async {
     final prefs = await SharedPreferences.getInstance();
     try {
@@ -467,8 +459,8 @@ class UserService {
     }
   }
 
-  /// LOGOUT — signs out of Firebase (if signed in), clears the saved
-  /// session/token from SharedPreferences, and empties the cached cart.
+  /// Signs out of Firebase, clears the saved session and token, and empties
+  /// the cached cart.
   Future<void> logout() async {
     try {
       if (currentUser != null) await signOut();

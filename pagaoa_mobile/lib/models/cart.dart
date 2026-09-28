@@ -5,11 +5,8 @@ import 'package:flutter/foundation.dart';
 import '../constants.dart';
 import '../services/cart_service.dart';
 import '../services/user_service.dart';
-// Enhancement 3: — resolves the real logged-in userId
-// LocalCartStore.instance.loadInitial() with no args — this method
-// resolves "who's logged in right now" internally, and reloads
-// automatically whenever that differs from what's cached (e.g. after
-// a different user logs in).
+// loadInitial() takes no arguments because it resolves the logged-in user id
+// itself, and reloads whenever that differs from what is cached.
 import 'product.dart';
 
 class Cart {

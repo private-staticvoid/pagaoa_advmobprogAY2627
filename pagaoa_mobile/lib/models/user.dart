@@ -1,10 +1,5 @@
-// User model (Lab 4, extended in Lab 5)
-//
-// ONE model for BOTH backends. DummyJSON and our Firestore profile document
-// use the same field names (firstName, lastName, age, phone, ...), so a
-// single `User.fromJson` can read either one.
-//
-// Lab 5 additions: age, phone (contactNo), uid (Firebase id), loginType.
+// One model for both backends. The Firestore profile uses the same field
+// names as DummyJSON, so a single fromJson reads either one.
 
 import 'login_type.dart';
 
@@ -61,8 +56,7 @@ class User {
 
   bool get isEmpty => id == 0 && uid.isEmpty && username.isEmpty;
 
-  /// Reads a DummyJSON response, a Firestore profile document, or the flat
-  /// map that UserService.getUserData() builds from SharedPreferences.
+  /// Reads a DummyJSON response, a Firestore profile, or the saved session.
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: _toInt(json['id']),
@@ -74,7 +68,7 @@ class User {
       gender: json['gender']?.toString() ?? '',
       image: json['image']?.toString() ?? '',
       age: _toInt(json['age']),
-      // DummyJSON calls it "phone"; the lab handout calls it "contactNo".
+      // The form calls it "Contact No.", DummyJSON calls it "phone".
       phone: (json['phone'] ?? json['contactNo'])?.toString() ?? '',
       accessToken:
           json['accessToken']?.toString() ?? json['token']?.toString() ?? '',

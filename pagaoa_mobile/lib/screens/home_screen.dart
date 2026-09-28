@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'product_screen.dart';
 import 'cart_screen.dart';
+import 'chat_screen.dart';
 import 'profile_screen.dart';
 import '../widgets/custom_text.dart';
 
@@ -51,8 +52,6 @@ class _HomeScreenState extends State<HomeScreen> {
         body: PageView(
           controller: _pageController,
           physics: const NeverScrollableScrollPhysics(),
-          // Enhancement 3: ProfileScreen (which renders the saved User +
-          // that user's cart) is now a real page in this PageView.
           children: const <Widget>[
             ProductScreen(),
             CartScreen(),
@@ -74,17 +73,13 @@ class _HomeScreenState extends State<HomeScreen> {
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
+        // The chat button now opens the real chat list.
         floatingActionButton: _selectedIndex == _cartIndex
             ? null
             : FloatingActionButton(
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => Scaffold(
-                      appBar: AppBar(title: const Text('Chat')),
-                      body: const Center(child: Text('Chat page coming soon')),
-                    ),
-                  ),
+                  MaterialPageRoute(builder: (_) => const ChatScreen()),
                 ),
                 child: const Icon(Icons.chat_bubble_outline),
               ),

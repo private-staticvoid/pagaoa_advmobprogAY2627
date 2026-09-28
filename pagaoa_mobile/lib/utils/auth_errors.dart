@@ -1,7 +1,5 @@
-// LAB 5 — Friendly error messages
-// FirebaseAuth throws FirebaseAuthException with a `code` like
-// "invalid-credential". Users shouldn't see raw codes, so every screen
-// passes caught errors through `friendlyAuthError()` before showing them.
+// Turns Firebase error codes like "invalid-credential" into messages a user
+// can actually read. Every screen passes caught errors through this first.
 
 import 'package:firebase_auth/firebase_auth.dart';
 

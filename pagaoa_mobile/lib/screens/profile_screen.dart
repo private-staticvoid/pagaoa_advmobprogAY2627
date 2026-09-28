@@ -1,11 +1,7 @@
-// Profile screen (Lab 4, updated for Lab 5 — Enhancement 3)
-//   * Loads the session via UserService().getUserData() -> User.fromJson
-//   * Shows different details depending on the LoginType:
-//       Firebase  -> UID, age, contact no, email, member since
-//       DummyJSON -> User ID, age, contact no, gender (read-only demo user)
-//   * Firebase accounts can: update username, change password, delete account
-//   * Logout (also available in Settings)
-//   * Cart summary by userId (Lab 4) — still driven by LocalCartStore.
+// Profile screen. Loads the saved session and shows different details
+// depending on the LoginType. Only Firebase accounts can update the
+// username, change the password or delete the account.
+
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -38,7 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUser() async {
-    // Handout: "Fetch user data via UserService().getUserData()".
+    // Read the saved session, then build the User model from it.
     final data = await _userService.getUserData();
     if (!mounted) return;
     setState(() {
@@ -57,7 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.pushNamedAndRemoveUntil(context, '/signin', (route) => false);
   }
 
-  // ---------------- Account actions (Firebase only) ----------------
+  // Account actions, Firebase only.
 
   Future<void> _updateUsername(User user) async {
     final ok = await showUpdateUsernameDialog(
@@ -110,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _goToSignIn();
   }
 
-  // ------------------------------- UI -------------------------------
+  // UI
 
   @override
   Widget build(BuildContext context) {
@@ -216,7 +212,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             SizedBox(height: 10.h),
-            // LoginType badge
+            // Shows which backend this session came from.
             Chip(
               avatar: Icon(
                 user.isFirebase
@@ -326,8 +322,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  /// DummyJSON users are shared demo accounts on a mock API, so there's
-  /// nothing real to update or delete.
+  /// DummyJSON demo accounts are shared and fake, so there is nothing real
+  /// to update or delete.
   Widget _buildDummyNote() {
     return Card(
       child: Padding(

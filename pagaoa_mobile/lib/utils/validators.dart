@@ -1,7 +1,5 @@
-// LAB 5 — Form validators
-// Every TextFormField in sign in / sign up / profile dialogs uses these,
-// so the rules live in ONE place instead of being copy-pasted per screen.
-// Each function returns null when the value is valid, or an error message.
+// All the form rules in one file so no screen repeats them.
+// Each one returns null when valid, or the error message to show.
 
 class Validators {
   Validators._(); // not meant to be instantiated
@@ -56,9 +54,8 @@ class Validators {
     return null;
   }
 
-  // ---------- Password rules ----------
-  // Shown live as a checklist under the password field (see
-  // widgets/password_requirements.dart) AND enforced on submit.
+  // Shown as a live checklist under the password field, and checked again
+  // on submit.
   static const Map<String, String> passwordRules = {
     'length': 'At least 8 characters',
     'upper': 'One uppercase letter (A–Z)',

@@ -1,6 +1,5 @@
-// LAB 5 — Live password checklist
-// Listens to a password controller and ticks each rule as the user types.
-// The same rules are enforced on submit by Validators.password().
+// Ticks each password rule as the user types. The same rules are enforced
+// on submit by Validators.password().
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';

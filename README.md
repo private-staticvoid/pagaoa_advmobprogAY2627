@@ -125,3 +125,42 @@ service cloud.firestore {
   }
 }
 ```
+
+## Laboratory 6 Discussion
+
+### Discuss how's the user structure in each collection of the cloud_firestore when initiating a chat. In addition what will happen if you've initiate your own chat or you chat yourself.
+
+Chat uses two collections in Cloud Firestore.
+
+**`users/{uid}`** is the same collection the sign up already writes to. The document ID is the Firebase uid, and inside it are `uid`, `firstName`, `lastName`, `username`, `email`, `age`, `phone`, `gender`, `loginType` and `createdAt`. The chat list just streams this whole collection, which is why every registered account shows up automatically without me storing a separate contact list. The `uid` field matters the most here, because that is what gets passed to the chat detail screen and used to build the chat room.
+
+**`chat_rooms/{chatRoomId}/messages/{messageId}`** holds the actual conversation. The room ID is not random, it is built from the two user IDs sorted alphabetically and joined with an underscore, like `abc123_xyz789`. Sorting is the important part, because without it person A would create `A_B` and person B would create `B_A` and they would end up typing into two different rooms. Sorting makes both sides land on the same document no matter who opens the chat first. Each message document under it has `senderId`, `senderEmail`, `receiverId`, `message`, `timestamp` and `seen`. The messages are a subcollection instead of an array inside the room document, so the screen can stream and order them by timestamp without downloading the entire conversation every time.
+
+So when I initiate a chat, the flow is: the chat list reads `users` to get the other person's uid, the detail screen sorts my uid with theirs to get the chat room ID, and then it only listens to the `messages` subcollection under that one room.
+
+**If I chat myself**, the sorting still runs but both IDs are identical, so the room ID becomes something like `abc123_abc123`. Nothing crashes, the room is just a conversation with myself. The problem is that every message has `senderId` equal to `receiverId`, so the screen thinks every bubble is mine and lines them all up on the right side with no reply ever appearing on the left. The seen status also never updates, because the code only marks a message as seen when the sender is someone other than me. That is exactly why Enhancement 1 filters the logged-in user out of the chat list, so that room never gets created in the first place.
+
+### Enhancements
+
+1. **Chat list, user display** — `ChatService.getUsersStream()` streams the `users` collection, and the chat list removes the document whose `uid` matches the logged-in user before building the list.
+2. **Chat list, search** — a search bar filters the streamed list in memory against first name, last name, username and email, so typing does not re-query Firestore.
+3. **Chat detail redesign** — rounded bubbles with the corner squared off on the sender's side, my messages on the right in the primary color and theirs on the left in the light tint, a timestamp under each message, and new messages fading and sliding in. For the sending state I used Firestore's `hasPendingWrites`, which is true while the write is still only in the local cache, so the bubble shows "sending..." with a clock, then a single check once the server has it, then a gold double check when the receiver opens the chat and `seen` is flipped to true.
+
+### Firestore security rules used
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /chat_rooms/{chatRoomId}/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+```
+
+The rules had to change from Lab 5. Before, a user could only read their own document, which is fine for the profile screen but it made the chat list come back empty since it needs to read everyone. Now any signed-in user can read the `users` collection but can still only write their own profile, and the chat rooms are open to signed-in users so both sides can send messages and update the `seen` field.

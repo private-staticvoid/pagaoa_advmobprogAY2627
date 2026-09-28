@@ -1,7 +1,6 @@
-// Sign in screen (Lab 4, updated for Lab 5)
-// Lab 5: a toggle at the top chooses the backend:
-//   DummyJSON -> username + password -> UserService.loginUser()
-//   Firebase  -> email + password    -> UserService.loginWithFirebase()
+// Sign in screen. The toggle on top picks the backend:
+//   DummyJSON -> username + password
+//   Firebase  -> email + password
 // Both save the session with a LoginType, then go to /home.
 
 import 'package:flutter/material.dart';
@@ -120,7 +119,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     SizedBox(height: 28.h),
 
-                    // Lab 5: choose the backend.
+                    // Pick the backend.
                     SegmentedButton<LoginType>(
                       showSelectedIcon: false,
                       segments: const [
@@ -161,8 +160,8 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     SizedBox(height: 16.h),
 
-                    // Login only checks that a password was typed; the
-                    // strength rules are enforced on sign up.
+                    // Login only checks a password was typed. The strength
+                    // rules belong on sign up.
                     PasswordField(
                       controller: _passwordController,
                       textInputAction: TextInputAction.done,
@@ -223,7 +222,7 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  /// DummyJSON only accepts its own seeded users — tap one to fill the form.
+  /// DummyJSON only accepts its own demo users. Tap one to fill the form.
   Widget _buildDemoAccounts() {
     return Container(
       padding: EdgeInsets.all(14.w),

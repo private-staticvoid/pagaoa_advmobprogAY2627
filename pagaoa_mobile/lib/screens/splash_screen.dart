@@ -11,9 +11,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-/// Shared full-screen brand view — used on launch (SplashScreen) and as
-/// a loading overlay during sign-in (SignInScreen). No animation
-/// controller here since it can be dropped in mid-flow with no entrance.
+/// Full-screen brand view. Used on launch and as the loading overlay
+/// during sign in.
 class BrandLoadingView extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -130,11 +129,8 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  /// Lab 4: check the persisted session, then route.
-  /// Lab 5: works for both LoginTypes, and refreshes the token first
-  /// (Firebase ID token / DummyJSON refreshToken). If the backend says the
-  /// session is dead (e.g. account deleted in the Firebase Console), we log
-  /// out and send the user to sign in.
+  /// Checks the saved session and refreshes the token before routing. If the
+  /// backend says the session is dead, log out and go to sign in.
   Future<void> _checkAuthentication() async {
     // Small delay so the entrance animation is visible.
     await Future.delayed(const Duration(milliseconds: 1600));
