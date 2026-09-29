@@ -53,10 +53,13 @@ class BrandLoadingView extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(
-                Icons.storefront_rounded,
-                color: AppColors.maroon,
-                size: 48.sp,
+              // App logo, maroon version so it reads on the white circle.
+              child: Padding(
+                padding: EdgeInsets.all(18.w),
+                child: Image.asset(
+                  'assets/images/nubdexchange_logo_maroon.png',
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
             SizedBox(height: 20.h),

@@ -93,10 +93,10 @@ class _SignInScreenState extends State<SignInScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SizedBox(height: 16.h),
-                    Icon(
-                      Icons.storefront_rounded,
-                      color: AppColors.maroon,
-                      size: 56.sp,
+                    Image.asset(
+                      'assets/images/nubdexchange_logo_maroon.png',
+                      height: 72.sp,
+                      fit: BoxFit.contain,
                     ),
                     SizedBox(height: 16.h),
                     Text(

@@ -1,5 +1,6 @@
 // Packages
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -24,7 +25,14 @@ Future<void> main() async {
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  await dotenv.load(fileName: 'assets/.env');
+  // In release there is no red error screen, so anything that throws before
+  // runApp just shows a black screen. constants.dart has a fallback URL, so a
+  // missing .env should not stop the app from starting.
+  try {
+    await dotenv.load(fileName: 'assets/.env');
+  } catch (e) {
+    debugPrint('[main] .env not loaded, using the default host: $e');
+  }
 
   // Firebase has to start before runApp, since UserService and ChatService
   // both use it.

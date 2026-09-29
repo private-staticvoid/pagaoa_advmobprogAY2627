@@ -1,6 +1,8 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-var host = dotenv.env['HOST'];
+// Falls back to the live URL so the app still works if .env fails to load in
+// a release build, instead of every request becoming "null/auth/login".
+var host = dotenv.env['HOST'] ?? 'https://dummyjson.com';
 const int demoUserId = 1;
 const List<Map<String, String>> demoAccounts = [
   {'username': 'emilys', 'password': 'emilyspass'},
